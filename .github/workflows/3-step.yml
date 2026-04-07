@@ -1,0 +1,59 @@
+name: Step 3 - Redesenhar Mergington
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches:
+      - main
+
+permissions:
+  contents: write
+  actions: write
+  issues: write
+  pull-requests: read
+
+jobs:
+  find_exercise:
+    if: ${{ !github.event.repository.is_template }}
+    name: Find Exercise Issue
+    uses: skills/exercise-toolkit/.github/workflows/find-exercise-issue.yml@v0.9.1
+
+  check_redesign:
+    name: Check redesign with design tokens
+    needs: [find_exercise]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+
+      - name: Check styles.css contains design tokens
+        uses: skills/action-keyphrase-checker@v1
+        with:
+          text-file: src/static/styles.css
+          keyphrase: "--sds-color"
+
+  post_next_step:
+    name: Post Step 4 Instructions
+    needs: [find_exercise, check_redesign]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Post comment
+        uses: GrantBirki/comment@v2.1.1
+        with:
+          issue-number: ${{ needs.find_exercise.outputs.issue-number }}
+          file: .github/steps/4-step.md
+
+  finish:
+    name: Enable Next Step
+    needs: [find_exercise, post_next_step]
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Disable current workflow
+        run: gh workflow disable "Step 3 - Redesenhar Mergington" --repo "${{ github.repository }}"
+      - name: Enable next workflow
+        run: gh workflow enable "Step 4 - Revisar e Publicar" --repo "${{ github.repository }}"

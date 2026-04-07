@@ -1,0 +1,20 @@
+{
+  "name": "Figma MCP Hands-On",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  "forwardPorts": [5173],
+  "postCreateCommand": "npm install",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "dbaeumer.vscode-eslint"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "chat.agent.enabled": true,
+        "chat.mcp.enabled": true
+      }
+    }
+  }
+}

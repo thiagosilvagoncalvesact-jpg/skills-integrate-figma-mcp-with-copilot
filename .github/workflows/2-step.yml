@@ -1,0 +1,86 @@
+name: Step 2 - Extrair Design Tokens
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/tokens/design-tokens.css"
+
+permissions:
+  contents: write
+  actions: write
+  issues: write
+
+jobs:
+  find_exercise:
+    if: ${{ !github.event.repository.is_template }}
+    name: Find Exercise Issue
+    uses: skills/exercise-toolkit/.github/workflows/find-exercise-issue.yml@v0.9.1
+
+  check_file:
+    name: Check design-tokens.css exists
+    needs: [find_exercise]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check file exists
+        uses: skills/exercise-toolkit/actions/file-exists@v0.9.1
+        with:
+          file: src/tokens/design-tokens.css
+
+  check_keyphrase_bg:
+    name: Check background token
+    needs: [find_exercise, check_file]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for background token
+        uses: skills/action-keyphrase-checker@v1
+        with:
+          text-file: src/tokens/design-tokens.css
+          keyphrase: "--sds-color-background-default-default"
+
+  check_keyphrase_text:
+    name: Check text token
+    needs: [find_exercise, check_file]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for text token
+        uses: skills/action-keyphrase-checker@v1
+        with:
+          text-file: src/tokens/design-tokens.css
+          keyphrase: "--sds-color-text-default-default"
+
+  post_next_step:
+    name: Post Step 3 Instructions
+    needs: [find_exercise, check_keyphrase_bg, check_keyphrase_text]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Post comment
+        uses: GrantBirki/comment@v2.1.1
+        with:
+          issue-number: ${{ needs.find_exercise.outputs.issue-number }}
+          file: .github/steps/3-step.md
+
+  finish:
+    name: Enable Next Step
+    needs: [find_exercise, post_next_step]
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Disable current workflow
+        run: gh workflow disable "Step 2 - Extrair Design Tokens" --repo "${{ github.repository }}"
+      - name: Enable next workflow
+        run: gh workflow enable "Step 3 - Redesenhar Mergington" --repo "${{ github.repository }}"
